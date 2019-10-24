@@ -3,6 +3,8 @@
 #This function reads in a
 taxonomy_filename <- "Tara_Oceans_Med/TOBG-MED-READCOUNTMATCH.bac120.tsv"
 checkm_filename <- "Tara_Oceans_Med/TOBG-MED_qa.txt"
+readcounts_filename <- "Tara_Oceans_Med/TOBG-MED-TOTAL.readcounts"
+tree_filename <- "Tara_Oceans_Med/GToTree_output.newick"
 
 import_gtdbtk_taxonomy_and_checkm <- function(taxonomy_filename, checkm_filename) {
   
@@ -47,13 +49,23 @@ return(taxtab)
 tax <- import_gtdbtk_taxonomy_and_checkm(taxonomy_filename = "Tara_Oceans_Med/TOBG-MED-READCOUNTMATCH.bac120.tsv", checkm_filename = "TOBG-MED_qa.txt")
 
 # Import Readcounts
-otu <- read.delim("Tara_Oceans_Med/TOBG-MED-TOTAL.readcounts") %>%
+import_readcounts <- function(readcounts_filename){
+
+  otu <- read.delim("Tara_Oceans_Med/TOBG-MED-TOTAL.readcounts") %>%
   dplyr::select(-Length) %>%
   column_to_rownames(var = "X") %>%
-  otu_table(taxa_are_rows = TRUE)
+ otu_table(taxa_are_rows = TRUE)
+ 
+return(otu)
+}
 
+otu <- import_readcounts(readcounts_filename)
 
+import_tree <- function(tree_filename){
+tree <- read_tree(tree_filename)
+taxa_names(tree) <- gsub(taxa_names(tree), pattern = "-", replacement = "_")
+}
 
-tara_med <- phyloseq(tax, otu)
+tara_med <- phyloseq(tax, otu, tree)
 
 
