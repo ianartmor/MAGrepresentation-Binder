@@ -35,8 +35,9 @@ combined_tbl_no_prefixes <- dplyr::mutate_at(.tbl = combined_tbl, .vars =colname
 #label_unassigned <- function(x){gsub(x, pattern = "", replacement = "Unassigned")}
 #combined_tbl_no_prefixes <- dplyr::mutate_at(.tbl = combined_tbl_no_prefixes, .vars =colnames(combined)[1:7], .funs = label_unassigned )
 
-
 combined_matrix_2 <- as.matrix(combined_tbl_no_prefixes,ncol = ncol(combined_tbl_no_prefixes))
+rownames(combined_matrix_2) <- rownames(combined_mat)
+
 taxtab <- tax_table(combined_matrix_2)
 
 return(taxtab)
