@@ -1,0 +1,169 @@
+---
+title: "MAG Representation"
+author: "Marian L Schmidt & Ian Morelan"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: show
+    highlight: default
+    keep_md: no
+    theme: journal
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+      toc_depth: 3
+editor_options: 
+  chunk_output_type: console
+---
+
+# Setup 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE, 
+                      echo = TRUE, 
+                      cache = FALSE,
+                      include = TRUE,
+                      warning = FALSE,
+                      collapse = FALSE,
+                      message = FALSE,
+                      engine = "R", # Chunks will always have R code, unless noted
+                      error = TRUE,
+                      fig.path="./Figures/")  # Set the figure options
+```
+
+
+
+# Load Packages & Functions
+```{r setup}
+source("functions.R")
+library(plotly)
+
+# We'd like to plot with pretty colors based on national park posters :)
+# install.packages("devtools")
+#devtools::install_github("katiejolly/nationalparkcolors")
+library(nationalparkcolors)
+colors4 <- park_palette("Saguaro", 4)
+```
+
+
+
+# Load Data
+
+```{r import-data}
+# Import the tax data
+tax_physeq <- import_gtdbtk_taxonomy_and_checkm(
+  taxonomy_filename = "Tara_Oceans_Med/TOBG-MED-READCOUNTMATCH.bac120.tsv",
+  checkm_filename = "Tara_Oceans_Med/TOBG-MED_qa.txt")
+
+# Import the metadata
+meta_physeq <- import_metadata(province_filename = "Tara_Oceans_Med/Sample-Province.tsv", 
+                           sizeFraction_filename = "Tara_Oceans_Med/Sample-SizeFraction.tsv") %>%
+  mutate(names = rownames(.)) %>%
+  separate(., col = names, into = c("station", "fraction", "depth"), sep = "_") %>%
+  mutate(r_names = paste(station, fraction, depth, sep = "_")) %>%
+  column_to_rownames(var = "r_names") %>%
+  dplyr::select(-c(station, fraction)) %>% 
+  sample_data()
+
+# Import the readcounts
+mag_table <- import_readcounts(readcounts_filename = "Tara_Oceans_Med/TOBG-MED-TOTAL.readcounts")
+
+# Import the tree
+mag_tree <- import_tree(tree_filename = "Tara_Oceans_Med/GToTree_output.newick")
+
+# Put into phyloseq object 
+tara_physeq <- phyloseq(meta_physeq, tax_physeq, mag_table, mag_tree)
+```
+
+# Normalization
+```{r data-normalized, fig.height=10, fig.width=12}
+# Normalizing the matrix 
+# Dividing rows by the genome size for the bin
+# Genome size is different from Bin size
+# Genome size is BinSize * BinCompletion
+
+# Read in checkm data to calculate the expected 
+checkm <- read.csv("Tara_Oceans_Med/TOBG-MED_qa.txt", sep = "\t", as.is = TRUE) %>%
+  dplyr::select("Bin.Id", "Completeness", "Genome.size..bp.") %>%
+  dplyr::rename(est_genome_size = "Genome.size..bp.") %>%
+  # Make a new column for the expected genome size based on est_genome_size * completeness
+  mutate(exp_genome_size = round(est_genome_size/(Completeness/100)))
+
+ordered_checkm <- data.frame(Bin.Id = rownames(mag_table)) %>%
+  left_join(checkm, by = "Bin.Id")
+
+#Sanity check 
+stopifnot(rownames(mag_table) == ordered_checkm$Bin.Id)
+
+# Do the normalization
+t_mat <- t(as.matrix(mag_table))
+# divide the matrix columns by the genome size of each MAG
+norm_mat <- t_mat/ordered_checkm$exp_genome_size
+t_norm_mat <- t(norm_mat)
+
+
+# Combine into a normalized phyloseq object
+tara_norm_physeq <- phyloseq(meta_physeq, tax_physeq, mag_tree, 
+                             otu_table(t_norm_mat, taxa_are_rows = TRUE))
+```
+
+
+## Heatmap
+
+```{r heatmap, fig.height=8, fig.width=10}
+heatmap(otu_table(tara_norm_physeq))
+
+# Visualize only the top 50 taxa
+top_50MAGs <- names(sort(taxa_sums(tara_norm_physeq), decreasing = TRUE))[1:50]
+top_50MAGs_physeq <- prune_taxa(top_50MAGs, tara_norm_physeq)
+
+# Subset only the bacterial samples
+bac_top50MAGs <- subset_samples(top_50MAGs_physeq, size_fraction =="bact")
+
+otu_long_50_bact <- psmelt(otu_table(bac_top50MAGs)) %>%
+  mutate(log_abund = log2(Abundance+0.0000001))
+
+heat_plot <- otu_long_50_bact %>%
+  ggplot(aes(x=Sample, y=OTU)) +
+  geom_tile(aes(fill = log_abund)) +
+  scale_fill_distiller(palette = "YlGnBu") +
+  labs(title = "Top 50 MAGs") +
+  theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust = 1))
+ggplotly(heat_plot)
+```
+
+## Beta diversity plots
+```{r betadiv}
+tara_norm.ord <- ordinate(tara_norm_physeq, method = "PCoA", distance = "bray")
+plot_ordination(tara_norm_physeq, tara_norm.ord, color = "province") +
+  facet_wrap(~size_fraction) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Paired")
+
+# Subset the bacterial samples and color by depth 
+bact <- subset_samples(tara_norm_physeq, size_fraction == "bact")
+bact.ord <- ordinate(bact, method = "PCoA", distance = "bray")
+plot_ordination(bact, bact.ord, color = "depth")+
+  theme_minimal() + 
+  geom_point(size = 2) + 
+  scale_color_manual(values = colors4)
+
+```
+
+## Abundance plots
+```{r abundance plots}
+ top_taxa <- names(sort(taxa_sums(bact),decreasing = TRUE))[1:4]
+top_bact <- prune_taxa(top_taxa, bact)
+top_bact_df <- psmelt(top_bact)
+
+abundplot <- ggplot(top_bact_df, aes(x=province, y= Abundance, color = depth))+
+  facet_wrap(~OTU, scales = "free_y") + 
+  geom_jitter(size = 2) + theme_minimal()+ 
+  labs(y = "Normalized MAG Abundance") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1),
+        axis.title.x = element_blank()) +
+  scale_color_manual(values = colors4)
+
+ggplotly(abundplot)
+
+```
