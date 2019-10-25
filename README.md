@@ -1,28 +1,41 @@
-# Metagenome Assembled Genome Abundance Analysis
+<u>M</u>etagenome-<u>A</u>ssembled <u>G</u>enomes (MAGs) Visualization Name
+====
 
-This repo uses only an RMarkdown script as input. I followed the following tutorial: https://kbroman.org/blog/2019/02/18/omg_binder/
+## Quick Start - how to launch this code in Binder. 
 
-It plots a heatmap after you mapped reads in your samples against bins or genomes you created. 
+  - This repo utilizes [Binder](https://binder.readthedocs.io/en/latest/user-manual/overview/intro.html) which is an open-source online application for viewing, editing and testing your code. Think of Binder as a remote computer that you can use for free to run your code and play with it.   
+  - This repo uses only an RMarkdown script as input code.When you link on the ![Binder](https://mybinder.org/badge_logo.svg) below, a webpage will open up and launch a binder.
 
- - Launch in RStudio: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/megaptera-helvetiae/MAGrepresentation-Binder/master)
+## The following is an example figure that our code generates for MAGs data
 
+   - a png or svg of your coolest visualization (high res!)
 
-## Input 
-Example files included:
+## Summary
 
- - `MetaG-heatmap-Binder.Rmd` - RMarkdown file with R code chunks to plot a heatmap in RStudio
- - `input_matrix_v2.txt` - A sample input file where we mapped reads from several samples against MAG bins that we had created.
+   - What is the visualization?
+   - What data goes in (and what preprocessing is necessary)?
+   - How should we use/interpret this visualization?
  
  
-## Output 
-
-Example output includes: 
-![alt text](Figures/heatmap-relativeAbundance-2-1.png)
-![alt text](Figures/non-interactive-MAGabund-1.png)
-
- 
-# Author ORCID IDs:
-- Marian Schmidt: https://orcid.org/0000-0002-2866-4496
-- Guillaume Jospin : https://orcid.org/0000-0002-8746-2632
-- Laetitia Wilkins: https://orcid.org/0000-0003-3632-2063
+## Authors ORCID IDs:
+- Marian Schmidt, [marschmi](https://github.com/marschmi), [ORCID ID](https://orcid.org/0000-0002-2866-4496)
+- Ian Morelan, [ianartmor](https://github.com/ianartmor), [ORCID ID](https://orcid.org/0000-0001-5161-6188)
+- Taruna Schuelke, [tarunaaggarwal](https://github.com/tarunaaggarwal), [ORCID ID](https://orcid.org/0000-0003-4370-8845) 
+- Guillaume Jospin, GITHUB ID, https://orcid.org/0000-0002-8746-2632
+- Laetitia Wilkins, GITHUB ID, https://orcid.org/0000-0003-3632-2063
 - Charles Reid: NA
+
+
+
+## Links
+
+Zenodo Binder, doi: LINK_TO_BINDER
+
+Github Binder: LINK_TO_BINDER
+
+Github Repository: https://github.com/speeding-up-science-workshops/<REPO_NAME>
+
+
+
+ 
+
