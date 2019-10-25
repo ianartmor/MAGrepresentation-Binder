@@ -30,7 +30,8 @@ meta_physeq <- import_metadata(province_filename = "Tara_Oceans_Med/Sample-Provi
   separate(., col = names, into = c("station", "fraction", "depth"), sep = "_") %>%
   mutate(r_names = paste(station, fraction, depth, sep = "_")) %>%
   column_to_rownames(var = "r_names") %>%
-  dplyr::select(-c(station, fraction))
+  dplyr::select(-c(station, fraction)) %>% 
+  sample_data()
 
 # Import the readcounts
 mag_table <- import_readcounts(readcounts_filename = "Tara_Oceans_Med/TOBG-MED-TOTAL.readcounts")
@@ -79,22 +80,21 @@ tara_norm_physeq <- phyloseq(meta_physeq, tax_physeq, mag_tree,
 
 ```{r heatmap}
 heatmap(otu_table(tara_norm_physeq))
+df_plotly <- as.data.frame(otu_table(tara_norm_physeq))
+x <- colnames(df_plotly)
+y <- rownames(df_plotly)
+plot_ly(x=x,y=y,z =df_plotly, type = "heatmap")
 ```
 
 ## Beta diversity plots
 
 ```{r betadiv}
 tara_norm.ord <- ordinate(tara_norm_physeq, method = "PCoA", distance = "bray")
-plot_ordination(tara_norm_physeq, tara_norm.ord, color = "province")+ facet_wrap(~size_fraction)
+plot_ordination(tara_norm_physeq, tara_norm.ord, color = "province")+ facet_wrap(~size_fraction)+theme_minimal()
 
 bact <- subset_samples(tara_norm_physeq, size_fraction == "bact")
 bact.ord <- ordinate(bact, method = "PCoA", distance = "bray")
-plot_ordination(bact, bact.ord, color = "province")
-
-qplot(taxa_sums(bact))
-bact_top <- filter_taxa(bact, function(x) sum(x) > 5, TRUE)
-bact_top.ord <- ordinate(bact_top, method = "PCoA", distance = "bray")
-ordplot <-  plot_ordination(bact_top, bact_top.ord, type = "species")
+plot_ordination(bact, bact.ord, color = "depth")+theme_minimal()
 
 
 ```
