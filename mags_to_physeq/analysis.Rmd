@@ -92,9 +92,9 @@ bact.ord <- ordinate(bact, method = "PCoA", distance = "bray")
 plot_ordination(bact, bact.ord, color = "province")
 
 qplot(taxa_sums(bact))
-bact_top <- filter_taxa(bact, function(x) sum(x) > 40, TRUE)
+bact_top <- filter_taxa(bact, function(x) sum(x) > 5, TRUE)
 bact_top.ord <- ordinate(bact_top, method = "PCoA", distance = "bray")
-plot_ordination(bact_top, bact_top.ord, color = "province", type = "split", label = "Genus")
+ordplot <-  plot_ordination(bact_top, bact_top.ord, type = "species")
 
 
 ```
