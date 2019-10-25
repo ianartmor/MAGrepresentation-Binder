@@ -96,6 +96,15 @@ bact <- subset_samples(tara_norm_physeq, size_fraction == "bact")
 bact.ord <- ordinate(bact, method = "PCoA", distance = "bray")
 plot_ordination(bact, bact.ord, color = "depth")+theme_minimal()
 
-
 ```
 
+## Abundance plots
+```{r abundance plots}
+ top_taxa <- names(sort(taxa_sums(bact),decreasing = TRUE))[1:4]
+top_bact <- prune_taxa(top_taxa, bact)
+top_bact_df <- psmelt(top_bact)
+abundplot <- ggplot(top_bact_df, aes(x=province, y= Abundance, color = depth))+facet_wrap(~OTU, scales = "free_y") + geom_jitter()+theme_minimal()+ labs(y = "Normalized MAG Abundance") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 1))
+ggplotly(abundplot)
+
+```
