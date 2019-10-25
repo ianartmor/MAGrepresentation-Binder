@@ -10,6 +10,7 @@ editor_options:
 # Load Packages & Functions
 ```{r setup}
 source("functions.R")
+
 ```
 
 
@@ -75,3 +76,22 @@ tara_norm_physeq <- phyloseq(meta_physeq, tax_physeq, mag_tree,
 ```{r heatmap}
 heatmap(otu_table(tara_norm_physeq))
 ```
+
+## Beta diversity plots
+
+```{r betadiv}
+tara_norm.ord <- ordinate(tara_norm_physeq, method = "PCoA", distance = "bray")
+plot_ordination(tara_norm_physeq, tara_norm.ord, color = "province")+ facet_wrap(~size_fraction)
+
+bact <- subset_samples(tara_norm_physeq, size_fraction == "bact")
+bact.ord <- ordinate(bact, method = "PCoA", distance = "bray")
+plot_ordination(bact, bact.ord, color = "province")
+
+qplot(taxa_sums(bact))
+bact_top <- filter_taxa(bact, function(x) sum(x) > 40, TRUE)
+bact_top.ord <- ordinate(bact_top, method = "PCoA", distance = "bray")
+plot_ordination(bact_top, bact_top.ord, color = "province", type = "split", label = "Genus")
+
+
+```
+
