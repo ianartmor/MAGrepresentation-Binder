@@ -10,6 +10,7 @@ editor_options:
 # Load Packages & Functions
 ```{r setup}
 source("functions.R")
+library(plotly)
 
 ```
 
