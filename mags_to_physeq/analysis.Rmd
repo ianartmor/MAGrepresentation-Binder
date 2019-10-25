@@ -25,7 +25,12 @@ tax_physeq <- import_gtdbtk_taxonomy_and_checkm(
 
 # Import the metadata
 meta_physeq <- import_metadata(province_filename = "Tara_Oceans_Med/Sample-Province.tsv", 
-                           sizeFraction_filename = "Tara_Oceans_Med/Sample-SizeFraction.tsv")
+                           sizeFraction_filename = "Tara_Oceans_Med/Sample-SizeFraction.tsv") %>%
+  mutate(names = rownames(.)) %>%
+  separate(., col = names, into = c("station", "fraction", "depth"), sep = "_") %>%
+  mutate(r_names = paste(station, fraction, depth, sep = "_")) %>%
+  column_to_rownames(var = "r_names") %>%
+  dplyr::select(-c(station, fraction))
 
 # Import the readcounts
 mag_table <- import_readcounts(readcounts_filename = "Tara_Oceans_Med/TOBG-MED-TOTAL.readcounts")
@@ -68,7 +73,6 @@ t_norm_mat <- t(norm_mat)
 tara_norm_physeq <- phyloseq(meta_physeq, tax_physeq, mag_tree, 
                              otu_table(t_norm_mat, taxa_are_rows = TRUE))
 ```
-
 
 
 ## Heatmap
