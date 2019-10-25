@@ -28,20 +28,24 @@ knitr::opts_chunk$set(eval = TRUE,
                       message = FALSE,
                       engine = "R", # Chunks will always have R code, unless noted
                       error = TRUE,
+                      fig.height = 7, fig.width = 7,
                       fig.path="./Figures/")  # Set the figure options
 ```
 
 
 
 # Load Packages & Functions
-```{r setup}
+```{r load-packages-funs}
+# Load functions and packages that are necessary
 source("functions.R")
 library(plotly)
 
 # We'd like to plot with pretty colors based on national park posters :)
 # install.packages("devtools")
 #devtools::install_github("katiejolly/nationalparkcolors")
+
 library(nationalparkcolors)
+# Assign the 4 colors for the 4 different depths 
 colors4 <- park_palette("Saguaro", 4)
 ```
 
@@ -101,7 +105,6 @@ t_mat <- t(as.matrix(mag_table))
 norm_mat <- t_mat/ordered_checkm$exp_genome_size
 t_norm_mat <- t(norm_mat)
 
-
 # Combine into a normalized phyloseq object
 tara_norm_physeq <- phyloseq(meta_physeq, tax_physeq, mag_tree, 
                              otu_table(t_norm_mat, taxa_are_rows = TRUE))
@@ -111,6 +114,7 @@ tara_norm_physeq <- phyloseq(meta_physeq, tax_physeq, mag_tree,
 ## Heatmap
 
 ```{r heatmap, fig.height=8, fig.width=10}
+# A clustered heatmap
 heatmap(otu_table(tara_norm_physeq))
 
 # Visualize only the top 50 taxa
@@ -118,45 +122,65 @@ top_50MAGs <- names(sort(taxa_sums(tara_norm_physeq), decreasing = TRUE))[1:50]
 top_50MAGs_physeq <- prune_taxa(top_50MAGs, tara_norm_physeq)
 
 # Subset only the bacterial samples
-bac_top50MAGs <- subset_samples(top_50MAGs_physeq, size_fraction =="bact")
+girus_top50MAGs <- subset_samples(top_50MAGs_physeq, size_fraction =="girus")
 
-otu_long_50_bact <- psmelt(otu_table(bac_top50MAGs)) %>%
-  mutate(log_abund = log2(Abundance+0.0000001))
+# Melt into long format and fix zeros to avoid infinity values
+otu_long_50_girus <- psmelt(otu_table(girus_top50MAGs)) %>%
+  mutate(log_abund = log2(Abundance + 0.0000001))
 
-heat_plot <- otu_long_50_bact %>%
+# Make a "heatmap" with geom_tile that works with plotly :) 
+heat_plot <- otu_long_50_girus %>%
   ggplot(aes(x=Sample, y=OTU)) +
   geom_tile(aes(fill = log_abund)) +
   scale_fill_distiller(palette = "YlGnBu") +
   labs(title = "Top 50 MAGs") +
   theme(axis.text.x = element_text(angle = 30, vjust = 1, hjust = 1))
+
+# Plot the plotly plot!
 ggplotly(heat_plot)
 ```
 
 ## Beta diversity plots
-```{r betadiv}
+```{r betadiv, fig.width = 9}
+# Calculate the bray curtis distances for all samples
 tara_norm.ord <- ordinate(tara_norm_physeq, method = "PCoA", distance = "bray")
-plot_ordination(tara_norm_physeq, tara_norm.ord, color = "province") +
+
+# Make a faceted plot by size fraction
+sizeFrac_PCoA_prov <- 
+  plot_ordination(tara_norm_physeq, tara_norm.ord, color = "province") +
   facet_wrap(~size_fraction) +
   theme_minimal() +
   scale_color_brewer(palette = "Paired")
 
+# Make it a plotly plot
+ggplotly(sizeFrac_PCoA_prov)
+```
+
+```{r betadiv2, fig.height = 4, fig.width=5}
 # Subset the bacterial samples and color by depth 
 bact <- subset_samples(tara_norm_physeq, size_fraction == "bact")
+# Calculate the bray curtis distances for a PCoA
 bact.ord <- ordinate(bact, method = "PCoA", distance = "bray")
-plot_ordination(bact, bact.ord, color = "depth")+
+# Make the plot
+bact_PCoA_depth <- plot_ordination(bact, bact.ord, color = "depth")+
   theme_minimal() + 
   geom_point(size = 2) + 
   scale_color_manual(values = colors4)
 
+# Make it a plotly plot
+ggplotly(bact_PCoA_depth)
 ```
 
 ## Abundance plots
 ```{r abundance plots}
- top_taxa <- names(sort(taxa_sums(bact),decreasing = TRUE))[1:4]
+# Select the top 4 taxa 
+top_taxa <- names(sort(taxa_sums(bact),decreasing = TRUE))[1:4]
 top_bact <- prune_taxa(top_taxa, bact)
+# Melt the data to the long format
 top_bact_df <- psmelt(top_bact)
 
-abundplot <- ggplot(top_bact_df, aes(x=province, y= Abundance, color = depth))+
+# Plot it! :) 
+abundplot <- ggplot(top_bact_df, aes(x=province, y= Abundance, color = depth)) +
   facet_wrap(~OTU, scales = "free_y") + 
   geom_jitter(size = 2) + theme_minimal()+ 
   labs(y = "Normalized MAG Abundance") + 
@@ -164,6 +188,6 @@ abundplot <- ggplot(top_bact_df, aes(x=province, y= Abundance, color = depth))+
         axis.title.x = element_blank()) +
   scale_color_manual(values = colors4)
 
+# Make it interactive 
 ggplotly(abundplot)
-
 ```
