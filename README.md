@@ -31,7 +31,7 @@
 
 Zenodo Binder, doi: LINK_TO_BINDER
 
-Github Binder: LINK_TO_BINDER
+Github Binder: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/ianartmor/MetaG-MAG-representation/master?filepath=rstudio)
 
 Github Repository: https://github.com/speeding-up-science-workshops/<REPO_NAME>
 
