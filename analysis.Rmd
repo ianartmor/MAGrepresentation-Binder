@@ -53,7 +53,7 @@ colors4 <- park_palette("Saguaro", 4)
 
 # Load Data
 
-```{r import-data}
+```{r import-data} 
 # Import the tax data
 tax_physeq <- import_gtdbtk_taxonomy_and_checkm(
   taxonomy_filename = "Tara_Oceans_Med/TOBG-MED-READCOUNTMATCH.bac120.tsv",
